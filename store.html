@@ -158,7 +158,7 @@
           <input type="tel" id="phone" name="phone" class="form-control" placeholder="رقم الهاتف" required>
         </div>
         <div class="mb-3">
-          <input type="file" id="image" name="image" class="form-control" accept="image/*" required>
+          <input type="file" id="screenshot" name="screenshot" class="form-control" accept="image/*" required>
         </div>
         <button type="button" class="btn btn-buy w-100" onclick="sendToTelegram()">إرسال الطلب</button>
       </form>
@@ -218,20 +218,70 @@
     }
 
     // إرسال البيانات إلى Telegram
-    function sendToTelegram() {
+    async function sendToTelegram() {
       const form = document.getElementById('purchaseForm');
       const formData = new FormData(form);
+
       const message = `
-      طلب جديد:
-      المنتج: ${formData.get('productName')}
-      الكمية: ${formData.get('quantity')}
-      السعر الإجمالي: ${formData.get('totalPrice')}
-      الاسم: ${formData.get('name')}
-      الهاتف: ${formData.get('phone')}
-      الرابط: ${formData.get('address')}
+        طلب جديد:
+        المنتج: ${formData.get('productName')}
+        الكمية: ${formData.get('quantity')}
+        السعر الإجمالي: ${formData.get('totalPrice')}
+        الاسم: ${formData.get('name')}
+        الهاتف: ${formData.get('phone')}
+        الرابط: ${formData.get('address')}
       `;
-      // تنفيذ إرسال البيانات إلى Telegram
-      alert('تم إرسال طلبك بنجاح! سيتم معالجته قريبًا.');
+
+      const botToken = '8064499097:AAFJfRbz5NFZVjYmRx8SmytYCwpQW0VxDFQ'; // استبدل هذا بـ API Token الخاص ببوتك
+      const chatId = '6984315607'; // استبدل هذا بمعرف الدردشة الخاص بك
+
+      const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
+
+      try {
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            chat_id: chatId,
+            text: message
+          })
+        });
+
+        if (response.ok) {
+          alert('تم إرسال طلبك بنجاح! سيتم معالجته قريبًا.');
+        } else {
+          alert('حدث خطأ أثناء إرسال الطلب. يرجى المحاولة مرة أخرى.');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('حدث خطأ أثناء إرسال الطلب. يرجى المحاولة مرة أخرى.');
+      }
+
+      // إرسال الصورة إلى Telegram
+      const fileInput = document.getElementById('screenshot');
+      if (fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        const photoUrl = `https://api.telegram.org/bot${botToken}/sendPhoto`;
+
+        const photoFormData = new FormData();
+        photoFormData.append('chat_id', chatId);
+        photoFormData.append('photo', file);
+
+        try {
+          const photoResponse = await fetch(photoUrl, {
+            method: 'POST',
+            body: photoFormData
+          });
+
+          if (!photoResponse.ok) {
+            console.error('Error sending photo:', await photoResponse.text());
+          }
+        } catch (error) {
+          console.error('Error sending photo:', error);
+        }
+      }
     }
 
     displayProducts();
